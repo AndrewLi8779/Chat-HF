@@ -1,0 +1,5 @@
+.env
+/.idea
+/frontend/app/node_modules
+/frontend/app/build
+/backend/build

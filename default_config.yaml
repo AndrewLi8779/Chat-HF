@@ -1,0 +1,17 @@
+model_list:
+  - type: API
+    provider: Azure
+    apiKey: env
+    azureEndpoint: env
+    modelTitle: GPT-3.5
+    modelName: gpt-35-turbo
+    imageCapable: false
+model_name: GPT-3.5
+system_prompt: You are a helpful assistant
+temp: 0.7
+press-to-talk: false
+timeout: 4
+mem_len: 10
+database: false
+firebaseURL: ''
+firebaseProjectId: ''
