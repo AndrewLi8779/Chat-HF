@@ -45,6 +45,7 @@ const AnnotationOptions = ({ annotationType, annotationOptions, onUpdateOptions 
                   value={option}
                   onChange={(e) => handleOptionChange(idx, e.target.value)}
                   variant="standard"
+                  autoComplete="off"
                 />
               </ToggleButton>
             ))}
@@ -52,7 +53,7 @@ const AnnotationOptions = ({ annotationType, annotationOptions, onUpdateOptions 
         )) ||
           (annotationType === 'likert' && (
             <div>
-              <Select value={annotationOptions.length} onChange={handleLikertChange}>
+              <Select value={annotationOptions.length} onChange={handleLikertChange} defaultValue={3}>
                 <MenuItem value={3}>3</MenuItem>
                 <MenuItem value={5}>5</MenuItem>
                 <MenuItem value={7}>7</MenuItem>
@@ -64,6 +65,7 @@ const AnnotationOptions = ({ annotationType, annotationOptions, onUpdateOptions 
                       value={option}
                       onChange={(e) => handleOptionChange(idx, e.target.value)}
                       variant="standard"
+                      autoComplete="off"
                     />
                   </ToggleButton>
                 ))}
@@ -79,6 +81,7 @@ const AnnotationOptions = ({ annotationType, annotationOptions, onUpdateOptions 
                       value={option}
                       onChange={(e) => handleOptionChange(idx, e.target.value)}
                       variant="standard"
+                      autoComplete="off"
                     />
                     {annotationOptions.length > 1 && (
                       <IconButton onClick={() => handleDeleteOption(idx)}>

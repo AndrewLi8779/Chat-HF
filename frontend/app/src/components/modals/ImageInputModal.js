@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { PhotoCamera } from '@mui/icons-material';
 
-const ImageInputModal = ({ open, onClose, onImageUpload }) => {
+const ImageInputModal = ({ open, onClose, onImageUpload, imageCapable }) => {
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
 
@@ -25,7 +25,7 @@ const ImageInputModal = ({ open, onClose, onImageUpload }) => {
       }
     };
 
-    if (open) {
+    if (open && imageCapable) {
       window.addEventListener('paste', handlePaste);
     } else {
       window.removeEventListener('paste', handlePaste);
@@ -35,7 +35,7 @@ const ImageInputModal = ({ open, onClose, onImageUpload }) => {
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
-  }, [open]);
+  }, [open, imageCapable]);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -73,49 +73,65 @@ const ImageInputModal = ({ open, onClose, onImageUpload }) => {
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Upload Image</DialogTitle>
-      <DialogContent>
-        <input
-          accept="image/*"
-          style={{ display: 'none' }}
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-        />
-        <label htmlFor="file-upload">
-          <IconButton color="primary" component="span">
-            <PhotoCamera />
-          </IconButton>
-          Upload an image
-        </label>
-        <TextField
-          label="Paste Image or Image Link"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        {file && (
-          <div>
-            <img
-              src={URL.createObjectURL(file)}
-              alt="Pasted"
-              style={{ maxWidth: '100%', maxHeight: '300px', display: 'block' }}
+      {imageCapable ? (
+        <>
+          <DialogTitle>Upload Image</DialogTitle>
+          <DialogContent>
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="file-upload"
+              type="file"
+              onChange={handleFileChange}
             />
-          </div>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClear} color="secondary">
-          Clear
-        </Button>
-        <Button onClick={onClose} color="primary">
-          Cancel
-        </Button>
-        <Button onClick={handleUpload} color="primary">
-          Insert
-        </Button>
-      </DialogActions>
+            <label htmlFor="file-upload">
+              <IconButton color="primary" component="span">
+                <PhotoCamera />
+              </IconButton>
+              Upload an image
+            </label>
+            <TextField
+              label="Paste Image or Image Link"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              fullWidth
+              margin="normal"
+            />
+            {file && (
+              <div>
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Pasted"
+                  style={{ maxWidth: '100%', maxHeight: '300px', display: 'block' }}
+                />
+              </div>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClear} color="secondary">
+              Clear
+            </Button>
+            <Button onClick={onClose} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleUpload} color="primary">
+              Insert
+            </Button>
+          </DialogActions>
+        </>
+      ) : (
+        <>
+          <DialogTitle>Image Input Unavailable</DialogTitle>
+          <DialogContent>
+            <p>This model is not capable of image input.</p>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   );
 };

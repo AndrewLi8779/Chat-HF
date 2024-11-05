@@ -1,7 +1,7 @@
 import copy
 import os
 
-from transformers import AutoTokenizer, pipeline
+from transformers import pipeline
 
 import openai
 import anthropic
@@ -9,8 +9,11 @@ import google.generativeai as genai
 from mistralai import Mistral
 from openai import OpenAI
 from openai import AzureOpenAI
+import ollama
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt
+
+from backend.custom import custom_generate
 
 load_dotenv()
 client = None
@@ -59,11 +62,18 @@ def set_api(model):
     elif model['provider'] == 'Mistral':
         api_key = get_api_key(model['apiKey'], model['modelTitle'])
         client = Mistral(api_key=api_key)
-        pass
 
-    elif model['provider'] == 'Ollama':
-        # Ollama API may not need initialization like OpenAI
-        pass
+
+def convert_text_only(history):
+    text_only_history = []
+
+    for message in history:
+        text_only_history.append({
+            'role': message['role'],
+            'content': message['content'][0]['text']
+        })
+
+    return text_only_history
 
 
 @retry(stop=stop_after_attempt(3))
@@ -77,8 +87,15 @@ def generate(history, model, sys_prompt, memory_len, diversity, timeout):
     else:
         conversation_history = copy.deepcopy(history)
 
+    if not model['imageCapable']:
+        conversation_history = convert_text_only(conversation_history)
+
     conversation_history.insert(0, system_prompt)
+
     model_response = ''
+
+    if model['type'] == 'Custom':
+        model_response = custom_generate(conversation_history)
 
     try:
         if model['provider'] in ['Azure', 'OpenAI']:
@@ -91,22 +108,31 @@ def generate(history, model, sys_prompt, memory_len, diversity, timeout):
             model_response = response.choices[0].message.content
 
         elif model['provider'] == 'Anthropic':
-            pass
+            model_response = client.messages.create(
+                messages=conversation_history,
+                model=model['modelName'],
+                temperature=diversity
+            )
 
         elif model['provider'] == 'Gemini':
-            # Call the Gemini API (modify as needed)
-            pass
+            model = genai.GenerativeModel(model['modelName'])
+            model_response = model.generate_content(
+                conversation_history,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=diversity,
+                ),
+            ).text
 
         elif model['provider'] == 'Mistral':
-            # Call the Mistral API (modify as needed)
+            model_response = client.chat.complete(model=model['modelName'], messages=conversation_history, temperature=diversity)
             pass
 
         elif model['provider'] == 'HuggingFace':
-            pipe = pipeline("text-generation", "HuggingFaceH4/zephyr-7b-beta")
+            pipe = pipeline("text-generation", model['modelName'], temperature=diversity)
             model_response = pipe(conversation_history)[0]['generated_text'][-1]
 
         elif model['provider'] == 'Ollama':
-            # Call Ollama API (modify as needed)
+            model_response = ollama.chat(model=model['modelName'], messages=conversation_history)
             pass
 
     except openai.APIConnectionError as e:

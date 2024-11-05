@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+
+from backend.custom import custom_save
 from model import generate
 
 load_dotenv()
@@ -50,6 +52,11 @@ def predict():
         response = "Sorry, the model timed out, please try again."
     message = {"response": response}
     return jsonify(message)
+
+
+@app.route('/api/save', methods=['POST'])
+def save_to_database():
+    custom_save()
 
 
 # Default route, renders app

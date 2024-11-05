@@ -98,13 +98,15 @@ function App() {
                 messageStates={messageStates}
                 setMessageStates={setMessageStates}
             />
-            <OptionsSidebar
-                isNavOpen={isNavOpen}
-                toggleNav={toggleNav}
-                setAnnotationList={setAnnotationList}
-                annotationList={annotationList}
-                config={config}
-            />
+            {!config['hide_config'] &&
+                <OptionsSidebar
+                    isNavOpen={isNavOpen}
+                    toggleNav={toggleNav}
+                    setAnnotationList={setAnnotationList}
+                    annotationList={annotationList}
+                    config={config}
+                />
+            }
             <ChatContainer
                 closeNav={closeNav}
                 annotationList={annotationList}

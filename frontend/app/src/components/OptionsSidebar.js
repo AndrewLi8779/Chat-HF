@@ -18,7 +18,7 @@ import {
 import { Close, Delete, Edit, RecordVoiceOver } from '@mui/icons-material';
 import StorageIcon from '@mui/icons-material/Storage';
 import jsYaml from 'js-yaml';
-import AnnotationForm from "./annotations/Annotation";
+import AnnotationForm from "./annotations/AnnotationForm";
 import AddModelModal from "./modals/AddModelModal";
 
 
@@ -30,8 +30,9 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
     const [annoName, setAnnoName] = useState('');
     const [annoType, setAnnoType] = useState('');
     const [question, setQuestion] = useState('');
+    const [errors, setErrors] = useState({});
     const [pressToTalk, setPressToTalk] = useState(config['press-to-talk']);
-    const [database, setDatabase] = useState(config['database']);
+    const [database, setDatabase] = useState(config['database']['enabled']);
     const [requireExplanation, setRequireExplanation] = useState(false);
     const [affectedMessages, setAffectedMessages] = useState('');
     const [options, setOptions] = useState(['Option 1']);
@@ -65,7 +66,42 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
         setIsAnnoNavOpen(!isAnnoNavOpen);
     };
 
+
     const addAnnotation = () => {
+        const validationErrors = {};
+
+        if (annotationList.some((annotation) => annotation.annotationName === annoName)) {
+            validationErrors.annotationName = "Annotation name must be unique.";
+        }
+
+        if (annoName === '') {
+            validationErrors.annotationName = "Annotation name cannot be blank."
+        }
+
+        if (!affectedMessages) {
+            validationErrors.affectedMessages = "Affected messages cannot be blank.";
+        }
+
+        const existingPostEdit = annotationList.some((annotation) => annotation.annotationType === "post_edit");
+        const existingReversal = annotationList.some((annotation) => annotation.annotationType === "reverse");
+
+        if (annoType === "post_edit" && existingPostEdit) {
+            validationErrors.annotationType = "Only one Post-edit annotation type is allowed.";
+        }
+        if (annoType === "reverse" && existingReversal) {
+            validationErrors.annotationType = "Only one Reversal annotation type is allowed.";
+        }
+        if (annoType === "") {
+            validationErrors.annotationType = "Annotation type cannot be empty."
+        }
+
+        // Check if there are any errors
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return; // Stop submission if there are errors
+        }
+
+        // If no errors, proceed with submission logic
         setAnnoOpen(false);
         const newAnnotation = {
             annotationName: annoName,
@@ -75,6 +111,7 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
             requireExplanation,
             affectedMessages
         };
+
         if (editing) {
             annotationList[editIndex] = newAnnotation;
         } else {
@@ -88,9 +125,11 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
         setAnnoName('');
         setAnnoType('');
         setQuestion('');
-        setOptions([]);
+        setOptions(['Option 1']);
         setAffectedMessages('');
         setRequireExplanation(false);
+        setEditing(false);
+        setErrors({});
     };
 
     const deleteAnnotation = (index) => {
@@ -111,9 +150,13 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
     };
 
     const updateConfig = (configName, value) => {
-        config[configName] = value;
-        if (configName === 'model_name') {
-            setSelectedModel(value);
+        if (configName === 'database') {
+            config[configName]['enabled'] = value;
+        } else {
+            config[configName] = value;
+            if (configName === 'model_name') {
+                setSelectedModel(value);
+            }
         }
     }
 
@@ -243,9 +286,9 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
                                 <IconButton
                                     onClick={() => {
                                         setDatabase(!database)
-                                        updateConfig('database', !config['database'])
+                                        updateConfig('database', !config['database']['enabled'])
                                     }}
-                                    color={config['database'] ? 'primary' : 'default'}
+                                    color={config['database']['enabled'] ? 'primary' : 'default'}
                                 >
                                     <StorageIcon />
                                 </IconButton>
@@ -359,7 +402,8 @@ const OptionsSidebar = ({ isNavOpen, toggleNav, setAnnotationList, annotationLis
                         affectedMessages={affectedMessages}
                         setAffectedMessages={setAffectedMessages}
                         options={options}
-                        setOptions={setOptions}>
+                        setOptions={setOptions}
+                        errors={errors}>
                         </AnnotationForm>
                     </DialogContent>
                     <DialogActions>

@@ -7,6 +7,7 @@ const ReverseModal = ({reverseOpen, setReverseOpen, handleReverse}) => {
             <DialogTitle>Reverse</DialogTitle>
             <DialogContent>
                 <DialogContentText>Are you sure you want to reverse the chat?</DialogContentText>
+
             </DialogContent>
             <DialogActions>
                 <Button onClick={() => setReverseOpen(false)} color="secondary">

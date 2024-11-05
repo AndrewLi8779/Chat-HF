@@ -21,6 +21,7 @@ import ResetModal from "./modals/ResetModal";
 import ReverseModal from "./modals/ReverseModal";
 import ImageInputModal from "./modals/ImageInputModal";
 import {LiveAudioVisualizer} from "react-audio-visualize";
+import {CustomSaveToDatabase} from "../utils/CustomMethods";
 
 
 const ChatContainer = ({closeNav, annotationList, config, conversationTree, messages, setMessages, messageStates, setMessageStates}) => {
@@ -55,15 +56,15 @@ const ChatContainer = ({closeNav, annotationList, config, conversationTree, mess
 
     useEffect(() => {
         const firebaseConfig = {
-            databaseURL: config['firebaseURL'],
-            projectId: config['firebaseProjectId'],
+            databaseURL: config['database']['url'],
+            projectId: config['database']['projectId'],
         };
 
         firebaseApp.current = initializeApp(firebaseConfig);
         db.current = getFirestore(firebaseApp.current);
     }, []);
 
-        useEffect(() => {
+    useEffect(() => {
         fetch('api/getspeechkey', {
             method: 'GET',
             mode: 'cors',
@@ -98,6 +99,13 @@ const ChatContainer = ({closeNav, annotationList, config, conversationTree, mess
             handleVoiceToggle();
         }
     }, [messages, isVoiceToggleOn]);
+
+    useEffect(() => {
+        if (!isSending && inputRef.current) {
+            setTimeout(() => inputRef.current.focus(), 10);
+        }
+    }, [isSending]);
+
 
     const openReverseModal = (index) => {
         setReverseOpen(true)
@@ -382,9 +390,6 @@ const ChatContainer = ({closeNav, annotationList, config, conversationTree, mess
 
             setIsSending(false);
 
-            if (inputRef.current) {
-                inputRef.current.focus();  // Focus the text field
-            }
         })
         .catch(err => {
             console.error('Error:', err);
@@ -416,10 +421,12 @@ const ChatContainer = ({closeNav, annotationList, config, conversationTree, mess
             download.push({'conv_id': i, 'conversation': conversations[i]['messages'], 'success': conversations[i].success});
         }
 
-        if (config['database']) {
-            const docRef = doc(db.current, 'cooking-chatbot', 'chat-history');
+        if (config['database']['enabled'] && config['database']['custom']) {
+            CustomSaveToDatabase(conversations, conversationTree);
+        } else if (config['database']['enabled']) {
+            const docRef = doc(db.current, config['database']['collection'], config['database']['document']);
             await updateDoc(docRef, {
-                ['session-1']: arrayUnion({
+                [config['database']['session']]: arrayUnion({
                     "annotations": JSON.stringify(download, null, 2),
                     "conversation_tree": JSON.stringify(conversationTree),
                     "time_submitted": new Date().toLocaleString()
@@ -496,6 +503,7 @@ const ChatContainer = ({closeNav, annotationList, config, conversationTree, mess
                 open={imageOpen}
                 onClose={handleCloseImageModal}
                 onImageUpload={handleImageUpload}
+                imageCapable={config['model_list'].find(model => model.modelTitle === config['model_name']).imageCapable}
             />
 
         <Container
