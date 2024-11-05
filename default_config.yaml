@@ -12,6 +12,12 @@ temp: 0.7
 press-to-talk: false
 timeout: 4
 mem_len: 10
-database: false
-firebaseURL: ''
-firebaseProjectId: ''
+database:
+  - enabled: false
+    custom: false
+    url: ''
+    projectId: ''
+    collection: ''
+    document: ''
+    field: ''
+hide_config: false
